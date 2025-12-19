@@ -4,6 +4,7 @@ import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
@@ -11,6 +12,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Function;
 
 /**
  * Class providing image tools for resizing, cropping, flipping and color adjustment.
@@ -18,9 +20,6 @@ import java.io.IOException;
  * @version 1.0
  */
 public class ImageUtil {
-
-    public static final int RESIZE_QUALITY_LOW = 0;
-    public static final int RESIZE_QUALITY_HIGH = 1;
 
     /**
      * Reads image from file without throwing exceptions on failure.
@@ -56,32 +55,37 @@ public class ImageUtil {
      * @param quality a constant value determining either a low quality fast result or more time-consuming quality scaling.
      * @return a resized version of an {@code Image}.
      */
-    public static Image resize(Image image, int targetWidth, int targetHeight, int quality) {
-        if (quality != ImageUtil.RESIZE_QUALITY_LOW && quality != ImageUtil.RESIZE_QUALITY_HIGH) {
-            throw new IllegalArgumentException("Quality parameter out of range: " + quality);
+    public static Image resize(Image image, int targetWidth, int targetHeight, ResizeQuality quality) {
+        if (targetWidth < 0 || targetHeight < 0) {
+            throw new IllegalArgumentException("Target width and target height must be positive numbers.");
+        }
+
+        if (targetWidth == 0 && targetHeight == 0) {
+            throw new IllegalArgumentException("Target width and target height cannot be both zero");
         }
 
         int imageHeight = image.getHeight(null);
         int imageWidth = image.getWidth(null);
 
-        targetWidth = targetWidth <= 0 ? (int) (imageWidth * ((double) targetHeight / imageHeight)) : targetWidth;
-        targetHeight = targetHeight <= 0 ? (int) (imageHeight * ((double) targetWidth / imageWidth)) : targetHeight;
+        //Calculating targetWidth or targetHeight based on the original proportions, if one of the dimensions is 0.
+        targetWidth = targetWidth == 0 ? (int) (imageWidth * ((double) targetHeight / imageHeight)) : targetWidth;
+        targetHeight = targetHeight == 0 ? (int) (imageHeight * ((double) targetWidth / imageWidth)) : targetHeight;
 
         if (targetWidth == imageWidth && targetHeight == imageHeight) {
             return image;
         }
 
-        if (quality == 0) {
-            return instantResize(image, targetWidth, targetHeight, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        if (quality == ResizeQuality.RESIZE_QUALITY_LOW) {
+            return instantResize(image, targetWidth, targetHeight);
         } else {
-            return progressiveResize(image, targetWidth, targetHeight, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            return progressiveResize(image, targetWidth, targetHeight);
         }
     }
 
     /**
-     * Creates a progressively resized version of the provided Image.
+     * Creates a progressively resized version of the provided {@code Image}. Returns an image of a good quality but is time-consuming.
      */
-    private static Image progressiveResize(Image image, int targetWidth, int targetHeight, Object hint) {
+    private static Image progressiveResize(Image image, int targetWidth, int targetHeight) {
         BufferedImage newImage = (BufferedImage) image;
 
         int type = (newImage.getTransparency() == Transparency.OPAQUE) ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
@@ -118,10 +122,10 @@ public class ImageUtil {
             }
 
             BufferedImage temporaryImage = new BufferedImage(imageWidth, imageHeight, type);
-            Graphics2D g2 = temporaryImage.createGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint);
-            g2.drawImage(newImage, 0, 0, imageWidth, imageHeight, null);
-            g2.dispose();
+            Graphics2D graphics2D = temporaryImage.createGraphics();
+            graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics2D.drawImage(newImage, 0, 0, imageWidth, imageHeight, null);
+            graphics2D.dispose();
 
             newImage = temporaryImage;
         } while (imageWidth != targetWidth || imageHeight != targetHeight);
@@ -130,20 +134,38 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a resized version of the provided Image.
+     * Creates a resized version of the provided {@code Image}. Very fast but might result in an image of a lower quality.
      */
-    public static Image instantResize(Image image, int targetWidth, int targetHeight, Object hint) {
+    public static Image instantResize(Image image, int targetWidth, int targetHeight) {
         BufferedImage bufferedImage = (BufferedImage) image;
 
         int type = (bufferedImage.getTransparency() == Transparency.OPAQUE) ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
 
         BufferedImage temporaryImage = new BufferedImage(targetWidth, targetHeight, type);
-        Graphics2D g2 = temporaryImage.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint);
-        g2.drawImage(bufferedImage, 0, 0, targetWidth, targetHeight, null);
-        g2.dispose();
+        Graphics2D graphics2D = temporaryImage.createGraphics();
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        graphics2D.drawImage(bufferedImage, 0, 0, targetWidth, targetHeight, null);
+        graphics2D.dispose();
 
         return temporaryImage;
+    }
+
+    /**
+     * Creates an Image by horizontally flipping the image provided.
+     * @param image an Image to be flipped.
+     * @return a new {@code Image} which is a horizontally flipped version of the old one.
+     */
+    public static Image flipHorizontally(Image image) {
+        return flip(image, true, false);
+    }
+
+    /**
+     * Creates an Image by vertically flipping the image provided.
+     * @param image an Image to be flipped.
+     * @return a new {@code Image} which is a vertically flipped version of the old one.
+     */
+    public static Image flipVertically(Image image) {
+        return flip(image, false, true);
     }
 
     /**
@@ -153,7 +175,7 @@ public class ImageUtil {
      * @param flipVertically should the image be flipped vertically.
      * @return a new {@code Image} which is a flipped version of the old one.
      */
-    public static Image flip(Image image, boolean flipHorizontally, boolean flipVertically) {
+    private static Image flip(Image image, boolean flipHorizontally, boolean flipVertically) {
         if (!flipHorizontally && !flipVertically) {
             return image;
         }
@@ -163,13 +185,79 @@ public class ImageUtil {
         int width = newImage.getWidth();
         int height = newImage.getHeight();
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                int newX = flipHorizontally ? width - x - 1 : x;
-                int newY = flipVertically ? height - y - 1 : y;
-                newImage.setRGB(newX, newY, originalImage.getRGB(x, y));
-            }
+        forEachPixel(newImage, point -> {
+            int x = flipHorizontally ? width - point.x - 1 : point.x;
+            int y = flipVertically ? height - point.y - 1 : point.y;
+            return new Color(originalImage.getRGB(x, y));
+        });
+
+        return newImage;
+    }
+
+    /**
+     * Creates an Image which is a version of the provided image, rotated by 90°.
+     * @param image an Image to be rotated.
+     * @return a new rotated {@code Image}.
+     */
+    public static Image rotateBy90Degrees(Image image) {
+        BufferedImage originalImage = (BufferedImage) image;
+        int width = originalImage.getHeight();
+        int height = originalImage.getWidth();
+
+        BufferedImage newImage = new BufferedImage(width, height, originalImage.getType());
+
+        forEachPixel(newImage, point ->
+                new Color(originalImage.getRGB(point.y, width - 1 - point.x)));
+
+        return newImage;
+    }
+
+    /**
+     * Creates an Image which is a version of the provided image, rotated by 180°.
+     * @param image an Image to be rotated.
+     * @return a new rotated {@code Image}.
+     */
+    public static Image rotateBy180Degrees(Image image) {
+        return flip(image, true, true);
+    }
+
+    /**
+     * Creates a cropped version of an image. Parameters specify a portion of the image to be cropped from each side.
+     * The sum of top and bottom crop cannot be greater than the image height, as well as the sum of right and left crop
+     * cannot be greater than the image width.
+     * @param image an Image to be cropped.
+     * @param top a value to be cropped at the top.
+     * @param right a value to be cropped on the right side.
+     * @param bottom a value to be cropped at the bottom.
+     * @param left a value to be cropped on the left side.
+     * @return a new {@code Image} which is a cropped version of the old one.
+     */
+    public static Image crop(Image image, int top, int right, int bottom, int left) {
+        BufferedImage originalImage = (BufferedImage) image;
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
+
+        if (top < 0 || right < 0 || bottom < 0 || left < 0) {
+            throw new IllegalArgumentException("Cropping parameters value must be between 0 and 100.");
         }
+
+        if (top + bottom > originalHeight) {
+            throw new IllegalArgumentException("Cannot crop image by more than its total height - invalid top and bottom parameters: " + top + ", " + bottom);
+        }
+
+        if (right + left > originalWidth) {
+            throw new IllegalArgumentException("Cannot crop image by more than its total width - invalid right and left parameters: " + right + ", " + left);
+        }
+
+        int newWidth = originalWidth - right - left;
+        int newHeight = originalHeight - top - bottom;
+        BufferedImage newImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
+
+        forEachPixel(newImage, point -> {
+            int originalX = point.x + left;
+            int originalY = point.y + top;
+            return new Color(originalImage.getRGB(originalX, originalY));
+        });
 
         return newImage;
     }
@@ -178,14 +266,14 @@ public class ImageUtil {
      * Creates a cropped version of an image. Parameters specify a portion of the image to be cropped from each side,
      * as a percentage of the appropriate image dimension (values between 0 and 100). The sum of top and bottom crop,
      * as well as the sum of right and left crop, cannot be over 100.
-     * @param image an image to be cropped.
+     * @param image an Image to be cropped.
      * @param top a value to be cropped at the top.
      * @param right a value to be cropped on the right side.
      * @param bottom a value to be cropped at the bottom.
      * @param left a value to be cropped on the left side.
      * @return a new {@code Image} which is a cropped version of the old one.
      */
-    public static Image crop(Image image, int top, int right, int bottom, int left) {
+    public static Image cropByPercentage(Image image, int top, int right, int bottom, int left) {
         if (top < 0 || right < 0 || bottom < 0 || left < 0) {
             throw new IllegalArgumentException("Cropping parameters value must be between 0 and 100.");
         }
@@ -211,38 +299,37 @@ public class ImageUtil {
         int bottomCrop = (int) Math.rint(originalHeight * (double) bottom/100);
         int leftCrop = (int) Math.rint(originalWidth * (double) left/100);
 
-        int newWidth = originalWidth - rightCrop - leftCrop;
-        int newHeight = originalHeight - topCrop - bottomCrop;
-        BufferedImage newImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
+        return crop(image, topCrop, rightCrop, bottomCrop, leftCrop);
+    }
 
-        for (int x = 0; x < newWidth; x++) {
-            for (int y = 0; y < newHeight; y++) {
-                int originalX = x + leftCrop;
-                int originalY = y + topCrop;
-                newImage.setRGB(x, y, originalImage.getRGB(originalX, originalY));
-            }
-        }
+    /**
+     * Inverts all colors of an image.
+     * @param image an Image to be altered.
+     * @return a new {@code Image} which is an inverted version of the original one.
+     */
+    public static Image invertColors(Image image) {
+        BufferedImage newImage = deepCopy((BufferedImage) image);
+
+        forEachPixel(newImage, point -> {
+            Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
+            return ColorUtil.invertColor(xyColor);
+        });
 
         return newImage;
     }
 
     /**
-     * Inverts all colors of an image.
-     * @param image an original image to be altered.
-     * @return a new {@code Image} which is an inverted version of the original one.
+     * Converts the image to grayscale.
+     * @param image an Image to be altered.
+     * @return a new {@code Image} which is a grayscale version of the original one.
      */
-    public static Image invertColors(Image image) {
+    public static Image convertToGrayscale(Image image) {
         BufferedImage newImage = deepCopy((BufferedImage) image);
-        int width = newImage.getWidth();
-        int height = newImage.getHeight();
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                Color originalColor = new Color(newImage.getRGB(x, y), true);
-                Color newColor = new Color(255 - originalColor.getRed(), 255 - originalColor.getGreen(), 255 - originalColor.getBlue(), originalColor.getAlpha());
-                newImage.setRGB(x, y, newColor.getRGB());
-            }
-        }
+        forEachPixel(newImage, point -> {
+            Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
+            return ColorUtil.getGrayscaleEquivalent(xyColor);
+        });
 
         return newImage;
     }
@@ -271,49 +358,28 @@ public class ImageUtil {
      */
     public static Image replaceColor(Image image, Color originalColor, Color newColor, int threshold) {
         BufferedImage newImage = deepCopy((BufferedImage) image);
-        int width = newImage.getWidth();
-        int height = newImage.getHeight();
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                Color xyColor = new Color(newImage.getRGB(x, y), true);
-                if (colorValueWithinRange(xyColor, originalColor, threshold)) {
-                    newImage.setRGB(x, y, buildColor(newColor, xyColor.getAlpha()).getRGB());
-                }
-            }
-        }
+        forEachPixel(newImage, point -> {
+            Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
+            return (ColorUtil.isColorWithinRange(xyColor, originalColor, threshold))
+                    ? ColorUtil.setColorTransparency(newColor, xyColor.getAlpha()) : xyColor;
+        });
 
         return newImage;
     }
 
     /**
-     * Checks if a color falls within the target range of acceptable values.
+     * Loops through each pixel of an image and repaints it according to the provided function.
      */
-    private static boolean colorValueWithinRange(Color color, Color targetColor, int threshold) {
-        if (threshold < 0) {
-            throw new IllegalArgumentException("Threshold: " + threshold + " - cannot be a negative number.");
+    private static void forEachPixel(BufferedImage newImage, Function<Point, Color> action) {
+        int width = newImage.getWidth();
+        int height = newImage.getHeight();
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                newImage.setRGB(x, y, action.apply(new Point(x, y)).getRGB());
+            }
         }
-
-        if (Math.abs(color.getRed() - targetColor.getRed()) > threshold) {
-            return false;
-        }
-
-        if (Math.abs(color.getGreen() - targetColor.getGreen()) > threshold) {
-            return false;
-        }
-
-        return Math.abs(color.getBlue() - targetColor.getBlue()) <= threshold;
-    }
-
-    /**
-     * Builds a new color by adding transparency to the original color.
-     */
-    private static Color buildColor(Color color, int alpha) {
-        if (alpha < 0 || alpha > 255) {
-            throw new IllegalArgumentException("Alpha value: " + alpha + " - out of range.");
-        }
-
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 
 }
