@@ -23,8 +23,8 @@ public class ImageUtil {
 
     /**
      * Reads image from file without throwing exceptions on failure.
-     * @param imageFile a File to read from.
-     * @return {@code Image} from a specified file, or null.
+     * @param imageFile a {@code File} to read from.
+     * @return {@code Image} from a specified file, or {@code null}.
      */
     public static Image readImage(File imageFile) {
         try {
@@ -35,8 +35,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a deep copy of a provided BufferedImage.
-     * @param bufferedImage a BufferedImage to be copied.
+     * Creates a deep copy of a provided {@code BufferedImage}.
+     * @param bufferedImage a {@code BufferedImage} to be copied.
      * @return a copy of the input as {@code BufferedImage}.
      */
     public static BufferedImage deepCopy(BufferedImage bufferedImage) {
@@ -47,9 +47,9 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a resized version of the input. If one of the dimensions provided is not a positive number,
-     * the resulting Image gets resized according to the other target dimension, while preserving original proportions.
-     * @param image an Image to be resized.
+     * Creates a resized version of the input. If one of the dimensions provided is zero,
+     * the resulting {@code Image} gets resized according to the other target dimension, while preserving original proportions.
+     * @param image an {@code Image} to be resized.
      * @param targetWidth a target width of the resized image.
      * @param targetHeight a target height of the resized image.
      * @param quality a constant value determining either a low quality fast result or more time-consuming quality scaling.
@@ -75,11 +75,10 @@ public class ImageUtil {
             return image;
         }
 
-        if (quality == ResizeQuality.RESIZE_QUALITY_LOW) {
-            return instantResize(image, targetWidth, targetHeight);
-        } else {
-            return progressiveResize(image, targetWidth, targetHeight);
-        }
+        return switch (quality) {
+            case LOW -> instantResize(image, targetWidth, targetHeight);
+            case HIGH -> progressiveResize(image, targetWidth, targetHeight);
+        };
     }
 
     /**
@@ -151,8 +150,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates an Image by horizontally flipping the image provided.
-     * @param image an Image to be flipped.
+     * Creates an {@code Image} by horizontally flipping the image provided.
+     * @param image an {@code Image} to be flipped.
      * @return a new {@code Image} which is a horizontally flipped version of the old one.
      */
     public static Image flipHorizontally(Image image) {
@@ -160,8 +159,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates an Image by vertically flipping the image provided.
-     * @param image an Image to be flipped.
+     * Creates an {@code Image} by vertically flipping the image provided.
+     * @param image an {@code Image} to be flipped.
      * @return a new {@code Image} which is a vertically flipped version of the old one.
      */
     public static Image flipVertically(Image image) {
@@ -169,8 +168,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a flipped version of an image.
-     * @param image an Image to be flipped.
+     * Creates a flipped version of an {@code Image}.
+     * @param image an {@code Image} to be flipped.
      * @param flipHorizontally should the image be flipped horizontally.
      * @param flipVertically should the image be flipped vertically.
      * @return a new {@code Image} which is a flipped version of the old one.
@@ -195,8 +194,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates an Image which is a version of the provided image, rotated by 90°.
-     * @param image an Image to be rotated.
+     * Creates an {@code Image} which is a version of the provided image, rotated by 90°.
+     * @param image an {@code Image} to be rotated.
      * @return a new rotated {@code Image}.
      */
     public static Image rotateBy90Degrees(Image image) {
@@ -213,8 +212,8 @@ public class ImageUtil {
     }
 
     /**
-     * Creates an Image which is a version of the provided image, rotated by 180°.
-     * @param image an Image to be rotated.
+     * Creates an {@code Image} which is a version of the provided image, rotated by 180°.
+     * @param image an {@code Image} to be rotated.
      * @return a new rotated {@code Image}.
      */
     public static Image rotateBy180Degrees(Image image) {
@@ -222,10 +221,27 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a cropped version of an image. Parameters specify a portion of the image to be cropped from each side.
+     * Creates an {@code Image} which is a version of the provided image, rotated by 270°.
+     * @param image an {@code Image} to be rotated.
+     * @return a new rotated {@code Image}.
+     */
+    public static Image rotateBy270Degrees(Image image) {
+        BufferedImage originalImage = (BufferedImage) image;
+        int width = originalImage.getHeight();
+        int height = originalImage.getWidth();
+
+        BufferedImage newImage = new BufferedImage(width, height, originalImage.getType());
+
+        forEachPixel(newImage, point ->
+                new Color(originalImage.getRGB(height - 1 - point.y, point.x)));
+
+        return newImage;
+    }
+    /**
+     * Creates a cropped version of an {@code Image}. Parameters specify a portion of the image to be cropped from each side.
      * The sum of top and bottom crop cannot be greater than the image height, as well as the sum of right and left crop
      * cannot be greater than the image width.
-     * @param image an Image to be cropped.
+     * @param image an {@code Image} to be cropped.
      * @param top a value to be cropped at the top.
      * @param right a value to be cropped on the right side.
      * @param bottom a value to be cropped at the bottom.
@@ -238,7 +254,7 @@ public class ImageUtil {
         int originalHeight = originalImage.getHeight();
 
         if (top < 0 || right < 0 || bottom < 0 || left < 0) {
-            throw new IllegalArgumentException("Cropping parameters value must be between 0 and 100.");
+            throw new IllegalArgumentException("Cropping parameters value cannot be less than 0.");
         }
 
         if (top + bottom > originalHeight) {
@@ -263,10 +279,10 @@ public class ImageUtil {
     }
 
     /**
-     * Creates a cropped version of an image. Parameters specify a portion of the image to be cropped from each side,
+     * Creates a cropped version of an {@code Image}. Parameters specify a portion of the image to be cropped from each side,
      * as a percentage of the appropriate image dimension (values between 0 and 100). The sum of top and bottom crop,
      * as well as the sum of right and left crop, cannot be over 100.
-     * @param image an Image to be cropped.
+     * @param image an {@code Image} to be cropped.
      * @param top a value to be cropped at the top.
      * @param right a value to be cropped on the right side.
      * @param bottom a value to be cropped at the bottom.
@@ -303,8 +319,8 @@ public class ImageUtil {
     }
 
     /**
-     * Inverts all colors of an image.
-     * @param image an Image to be altered.
+     * Inverts all colors of an {@code Image}.
+     * @param image an {@code Image} to be altered.
      * @return a new {@code Image} which is an inverted version of the original one.
      */
     public static Image invertColors(Image image) {
@@ -312,15 +328,15 @@ public class ImageUtil {
 
         forEachPixel(newImage, point -> {
             Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
-            return ColorUtil.invertColor(xyColor);
+            return ColorUtil.inverted(xyColor);
         });
 
         return newImage;
     }
 
     /**
-     * Converts the image to grayscale.
-     * @param image an Image to be altered.
+     * Converts the {@code Image} to grayscale.
+     * @param image an {@code Image} to be altered.
      * @return a new {@code Image} which is a grayscale version of the original one.
      */
     public static Image convertToGrayscale(Image image) {
@@ -328,18 +344,18 @@ public class ImageUtil {
 
         forEachPixel(newImage, point -> {
             Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
-            return ColorUtil.getGrayscaleEquivalent(xyColor);
+            return ColorUtil.grayscale(xyColor);
         });
 
         return newImage;
     }
 
     /**
-     * Identifies a specified color in an image and replaces it with another. The tolerance threshold is set to 0,
+     * Identifies a specified color in an {@code Image} and replaces it with another. The tolerance threshold is set to 0,
      * therefore only the pixels with the exact value of the original color will be altered, while all others stay unchanged.
-     * @param image an Image to be altered.
-     * @param originalColor a color to be replaced.
-     * @param newColor a target color to replace the original one.
+     * @param image an {@code Image} to be altered.
+     * @param originalColor a {@code Color} to be replaced.
+     * @param newColor a target {@code Color} to replace the original one.
      * @return a new altered version of an {@code Image} with the original color replaced with the new one.
      */
     public static Image replaceColor(Image image, Color originalColor, Color newColor) {
@@ -347,11 +363,11 @@ public class ImageUtil {
     }
 
     /**
-     * Identifies a specified color in an image and replaces it with another.
+     * Identifies a specified color in an {@code Image} and replaces it with another.
      * Colors of similar value to the original color might still be replaced depending on the provided threshold value.
-     * @param image an Image to be altered.
-     * @param originalColor a color to be replaced.
-     * @param newColor a target color to replace the original one.
+     * @param image an {@code Image} to be altered.
+     * @param originalColor a {@code Color} to be replaced.
+     * @param newColor a target {@code Color} to replace the original one.
      * @param threshold an acceptable difference from the original color to still qualify for a replacement. The higher
      *                  the threshold, the bigger range of the color values are going to be replaced.
      * @return an altered version of an {@code Image} with the original color replaced with the new one.
@@ -362,7 +378,7 @@ public class ImageUtil {
         forEachPixel(newImage, point -> {
             Color xyColor = new Color(newImage.getRGB(point.x, point.y), true);
             return (ColorUtil.isColorWithinRange(xyColor, originalColor, threshold))
-                    ? ColorUtil.setColorTransparency(newColor, xyColor.getAlpha()) : xyColor;
+                    ? ColorUtil.semiTransparent(newColor, xyColor.getAlpha()) : xyColor;
         });
 
         return newImage;
