@@ -46,7 +46,6 @@ public class ImageUtilTest {
         Image image3 = ImageUtil.resize(image2, 1400, 1000, ResizeQuality.HIGH);
         Image image4 = ImageUtil.resize(image, 3474, 4632, ResizeQuality.LOW);
 
-
         Assertions.assertNotNull(image1);
         Assertions.assertEquals(500, image1.getWidth(null));
         Assertions.assertEquals(666, image1.getHeight(null));

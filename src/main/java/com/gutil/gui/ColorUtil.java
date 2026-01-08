@@ -23,7 +23,7 @@ public class ColorUtil {
         }
 
         if (threshold < 0 || threshold > 255) {
-            throw new IllegalArgumentException("Threshold: " + threshold + " - cannot be a negative number.");
+            throw new IllegalArgumentException("Threshold: " + threshold + " - out of range.");
         }
 
         return Math.abs(firstColor.getRed() - secondColor.getRed()) <= threshold
