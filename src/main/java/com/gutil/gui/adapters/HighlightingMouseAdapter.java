@@ -16,9 +16,9 @@ import java.util.function.Consumer;
 public class HighlightingMouseAdapter extends MouseAdapter {
 
     /**
-     * The {@code Component} to be highlighted.
+     * The {@code JComponent} to be highlighted.
      */
-    private final JComponent component;
+    private JComponent component;
 
     /**
      * The component's {@code Border} while not highlighted.
@@ -63,12 +63,10 @@ public class HighlightingMouseAdapter extends MouseAdapter {
     /**
      * Assigns the {@code Component} to be highlighted and which parts of the component (if any) should be highlighted.
      * Enables the adapter.
-     * @param component the component to be highlighted
      * @param highlightBorders should the component's borders be highlighted
      * @param highlightBackground should the component's background be highlighted
      */
-    public HighlightingMouseAdapter(JComponent component, boolean highlightBorders, boolean highlightBackground) {
-        this.component = component;
+    public HighlightingMouseAdapter(boolean highlightBorders, boolean highlightBackground) {
         this.highlightBorders = highlightBorders;
         this.highlightBackgrounds = highlightBackground;
         this.isEnabled = true;
@@ -118,6 +116,8 @@ public class HighlightingMouseAdapter extends MouseAdapter {
             return;
         }
 
+        component = (JComponent) event.getSource();
+
         if (highlightBorders) {
             originalBorder = component.getBorder();
             component.setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.WHITE));
@@ -162,8 +162,9 @@ public class HighlightingMouseAdapter extends MouseAdapter {
             return;
         }
 
+        component = (JComponent) event.getSource();
+
         if (highlightBorders) {
-            originalBorder = originalBorder != null ? originalBorder : BorderFactory.createEmptyBorder(5, 5, 5, 5);
             component.setBorder(originalBorder);
         }
 
