@@ -5,7 +5,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Mouse adapter class allowing a component to be dragged on screen.
+ * Mouse adapter class allowing a {@code Component} to be dragged on screen. Doesn't have to be added directly
+ * to the component in question (e.g. window or dialog) but to any component that belongs to its layout.
+ * To work properly, the adapter needs to be added both as a {@code MouseListener} and {@code MouseMotionListener}.
  * @author Ewelina Gren
  * @version 1.0
  */
@@ -22,13 +24,13 @@ public class DragMouseAdapter extends MouseAdapter {
     private int yDifference;
 
     /**
-     * The component to be moved on screen.
+     * The {@code Component} to be moved on screen.
      */
     private final Component component;
 
     /**
      * The object constructor, assigns the component to be moved.
-     * @param component the {@code Component} to be moved
+     * @param component the {@code Component} to be moved (not necessarily the component the adapter is added to)
      */
     public DragMouseAdapter(Component component) {
         this.component = component;
