@@ -86,11 +86,19 @@ public class GraphicsUtil {
             return "";
         }
 
-        while (metrics.stringWidth(text) > (width - dotsWidth) && !text.isEmpty()) {
-            text = text.substring(0, text.length() - 1);
+        int croppedTextWidth = width - dotsWidth;
+        int assumedLength = text.length() * croppedTextWidth / metrics.stringWidth(text);
+        StringBuilder croppedText = new StringBuilder(text.substring(0, assumedLength));
+
+        while (metrics.stringWidth(croppedText.toString()) > croppedTextWidth && !text.isEmpty()) {
+            croppedText.deleteCharAt(croppedText.length() - 1);
         }
 
-        return text + "...";
+        while (metrics.stringWidth(croppedText.toString() + text.charAt(croppedText.length())) < croppedTextWidth) {
+            croppedText.append(text.charAt(croppedText.length()));
+        }
+
+        return croppedText + "...";
     }
 
 }
