@@ -1,6 +1,7 @@
 package com.gutil.gui.component.button;
 
-import com.gutil.gui.temp.GraphicsUtil;
+import com.gutil.gui.GraphicsUtil;
+import com.gutil.gui.HorizontalAlignment;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -117,8 +118,8 @@ public class RoundButton extends HighlightedButton {
     @Override
     public void drawText(Graphics2D g2) {
         g2.setColor(getForeground());
-        String adjustedText = GraphicsUtil.shortenString(g2, text, getFont(), (keepSymmetry ? diameter : width) - 10);
-        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, width - 10, height), getFont(), GraphicsUtil.CENTER, 0, g2);
+        String adjustedText = GraphicsUtil.cropString(text, getFont(), (keepSymmetry ? diameter : width) - 10, g2);
+        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, width - 10, height), getFont(), HorizontalAlignment.CENTER, 0, g2);
     }
 
 }

@@ -61,6 +61,11 @@ public class HighlightingMouseAdapter extends MouseAdapter {
     private Consumer<MouseEvent> action;
 
     /**
+     * Should the highlight be active for the component.
+     */
+    private boolean isHighlightEnabled;
+
+    /**
      * Assigns the {@code Component} to be highlighted and which parts of the component (if any) should be highlighted.
      * Enables the adapter.
      * @param highlightBorders should the component's borders be highlighted
@@ -70,6 +75,7 @@ public class HighlightingMouseAdapter extends MouseAdapter {
         this.highlightBorders = highlightBorders;
         this.highlightBackgrounds = highlightBackground;
         this.isEnabled = true;
+        this.isHighlightEnabled = true;
     }
 
     /**
@@ -108,7 +114,7 @@ public class HighlightingMouseAdapter extends MouseAdapter {
      */
     @Override
     public void mouseEntered(MouseEvent event) {
-        if(!isEnabled) {
+        if(!isEnabled || !isHighlightEnabled) {
             return;
         }
 
@@ -137,24 +143,32 @@ public class HighlightingMouseAdapter extends MouseAdapter {
      * @return the {@code Color} of the highlighted background
      */
     private Color getHighlightBackgroundColor() {
-        if (highlightColor != null) {
-            return highlightColor;
+        if (highlightColor == null) {
+            highlightColor = new Color(
+                    Math.min(255, originalColor.getRed() + 30),
+                    Math.min(255, originalColor.getGreen() + 30),
+                    Math.min(255, originalColor.getBlue() + 30)
+            );
         }
 
-        return new Color(
-                Math.min(255, originalColor.getRed() + 30),
-                Math.min(255, originalColor.getGreen() + 30),
-                Math.min(255, originalColor.getBlue() + 30)
-        );
+        return highlightColor;
     }
 
     /**
-     * Returns the highlighted {@code Component} to its original state.
+     * Returns the highlight {@code Color} of the component.
+     * @return the highlight color
+     */
+    public Color getHighlightColor() {
+        return highlightColor;
+    }
+
+    /**
+     * Sets the highlighted {@code Component} to its original state.
      * @param event the event to be processed
      */
     @Override
     public void mouseExited(MouseEvent event) {
-        if (!isEnabled) {
+        if (!isEnabled || !isHighlightEnabled) {
             return;
         }
 
@@ -181,7 +195,16 @@ public class HighlightingMouseAdapter extends MouseAdapter {
      * @param enabled should the adapter be enabled
      */
     public void setEnabled(boolean enabled) {
-        this.isEnabled = enabled;
+        isEnabled = enabled;
+    }
+
+    /**
+     * Enables or disables the highlight effect for the component, while the adapter is enabled.
+     * Disabling the adapter disables the highlight automatically.
+     * @param enabled should the highlight be enabled
+     */
+    public void setHighlightEnabled(boolean enabled) {
+        isHighlightEnabled = enabled;
     }
 
 }

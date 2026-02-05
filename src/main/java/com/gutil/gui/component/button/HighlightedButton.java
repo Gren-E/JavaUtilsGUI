@@ -1,7 +1,8 @@
 package com.gutil.gui.component.button;
 
-import com.gutil.gui.temp.GraphicsUtil;
-import com.gutil.gui.temp.HighlightingMouseAdapter;
+import com.gutil.gui.GraphicsUtil;
+import com.gutil.gui.HorizontalAlignment;
+import com.gutil.gui.adapters.HighlightingMouseAdapter;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -72,8 +73,12 @@ public abstract class HighlightedButton extends Button {
      */
     public void drawText(Graphics2D g2) {
         g2.setColor(getForeground());
-        String adjustedText = GraphicsUtil.shortenString(g2, text, getFont(), getWidth() - 10);
-        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, getWidth() - 10, getHeight()), getFont(), GraphicsUtil.CENTER, 0, g2);
+        String adjustedText = GraphicsUtil.cropString(text, getFont(), getWidth() - 10, g2);
+        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, getWidth() - 10, getHeight()), getFont(), HorizontalAlignment.CENTER, 0, g2);
+    }
+
+    public HighlightingMouseAdapter getHighlightingMouseAdapter() {
+        return mouseAdapter;
     }
 
     /**
@@ -81,7 +86,7 @@ public abstract class HighlightedButton extends Button {
      */
     @Override
     public void setMouseListener() {
-        mouseAdapter = new HighlightingMouseAdapter(this, false, true);
+        mouseAdapter = new HighlightingMouseAdapter(false, true);
         mouseAdapter.setMouseReleasedAction(event -> handleMouseReleased());
         addMouseListener(mouseAdapter);
     }
