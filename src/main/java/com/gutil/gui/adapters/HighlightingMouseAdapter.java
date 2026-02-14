@@ -9,7 +9,7 @@ import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
 /**
- * Mouse adapter class highlighting the component or the component borders, as well as performing an action.
+ * Mouse adapter class which provides various highlight effects, as well as performs an action.
  * @author Ewelina Gren
  * @version 1.0
  */
@@ -28,27 +28,42 @@ public class HighlightingMouseAdapter extends MouseAdapter {
     /**
      * The component's background color while not highlighted.
      */
-    private Color originalColor;
+    private Color originalBackgroundColor;
 
     /**
-     * The component's highlighted color if specified by the user.
+     * The component's element color while not highlighted.
      */
-    private Color highlightColor;
+    private Color originalElementColor;
 
     /**
-     * Is the adapter enabled.
+     * The component's background color while highlighted.
      */
-    private boolean isEnabled;
+    private Color backgroundHighlightColor;
+
+    /**
+     * The component's element color while highlighted.
+     */
+    private Color elementHighlightColor;
 
     /**
      * Should the borders be highlighted.
      */
-    private final boolean highlightBorders;
+    private boolean highlightBorders;
 
     /**
      * Should the background be highlighted.
      */
-    private final boolean highlightBackgrounds;
+    private boolean highlightBackgrounds;
+
+    /**
+     * Should another part of the component be highlighted.
+     */
+    private boolean customHighlight;
+
+    /**
+     * The action to be performed when the mouse button is released.
+     */
+    private Consumer<MouseEvent> action;
 
     /**
      * Is the component in a highlighted or regular state.
@@ -56,9 +71,9 @@ public class HighlightingMouseAdapter extends MouseAdapter {
     private boolean isHighlighted;
 
     /**
-     * The action to be performed when the mouse button is released.
+     * Is the adapter enabled.
      */
-    private Consumer<MouseEvent> action;
+    private boolean isEnabled;
 
     /**
      * Should the highlight be active for the component.
@@ -71,11 +86,55 @@ public class HighlightingMouseAdapter extends MouseAdapter {
      * @param highlightBorders should the component's borders be highlighted
      * @param highlightBackground should the component's background be highlighted
      */
-    public HighlightingMouseAdapter(boolean highlightBorders, boolean highlightBackground) {
+    public HighlightingMouseAdapter(boolean highlightBorders, boolean highlightBackground, boolean customHighlight) {
         this.highlightBorders = highlightBorders;
         this.highlightBackgrounds = highlightBackground;
+        this.customHighlight = customHighlight;
+
         this.isEnabled = true;
         this.isHighlightEnabled = true;
+    }
+
+
+    /**
+     * Turns on or off the highlight effect for the component's borders.
+     * @param highlightBorders should the borders be highlighted
+     */
+    public void setHighlightBorders(boolean highlightBorders) {
+        this.highlightBorders = highlightBorders;
+    }
+
+    /**
+     * Turns on or off the highlight effect for the component's background.
+     * @param highlightBackgrounds should the borders be highlighted
+     */
+    public void setHighlightBackgrounds(boolean highlightBackgrounds) {
+        this.highlightBackgrounds = highlightBackgrounds;
+    }
+
+
+    /**
+     * Turns on or off the custom highlight effect for the component.
+     * @param customHighlight should the borders be highlighted
+     */
+    public void setCustomHighlight(boolean customHighlight) {
+        this.customHighlight = customHighlight;
+    }
+
+    /**
+     * Assigns a user picked color for highlighted background.
+     * @param color what {@code Color} should the background be while highlighted
+     */
+    public void setBackgroundHighlightColor(Color color) {
+        backgroundHighlightColor = color;
+    }
+
+    /**
+     * Assigns a user picked color for custom highlighted element.
+     * @param color what {@code Color} should the element be while highlighted
+     */
+    public void setCustomHighlightColor(Color color) {
+        elementHighlightColor = color;
     }
 
     /**
@@ -87,15 +146,40 @@ public class HighlightingMouseAdapter extends MouseAdapter {
     }
 
     /**
-     * Assigns a user picked color for highlighted background.
-     * @param color what {@code Color} should the background be while highlighted
+     * Enables or disables the adapter.
+     * @param enabled should the adapter be enabled
      */
-    public void setHighlightColor(Color color) {
-        highlightColor = color;
+    public void setEnabled(boolean enabled) {
+        isEnabled = enabled;
     }
 
     /**
-     * Performs an action when the mouse button is released, unless the action is {@code null}.
+     * Enables or disables the highlight effect for the component, while the adapter is enabled.
+     * Disabling the adapter disables the highlight automatically.
+     * @param enabled should the highlight be enabled
+     */
+    public void setHighlightEnabled(boolean enabled) {
+        isHighlightEnabled = enabled;
+    }
+
+    /**
+     * Returns the highlight {@code Color} of the background.
+     * @return the highlight color
+     */
+    public Color getBackgroundHighlightColor() {
+        return backgroundHighlightColor;
+    }
+
+    /**
+     * Returns the highlight {@code Color} of the highlighted element.
+     * @return the highlight color
+     */
+    public Color getCustomHighlightColor() {
+        return elementHighlightColor;
+    }
+
+    /**
+     * Performs an action when the mouse button is released.
      * @param event the event to be processed
      */
     @Override
@@ -103,63 +187,6 @@ public class HighlightingMouseAdapter extends MouseAdapter {
         if(action != null && isEnabled) {
             action.accept(event);
         }
-    }
-
-    /**
-     * Highlights the {@code Component} according to specified parameters, unless the adapter is disabled
-     * or the component highlighted already. If the border is to be highlighted, the adapter changes it to white.
-     * If the background is to be highlighted, the right background color is determined
-     * according to {@link #getHighlightBackgroundColor()}.
-     * @param event the event to be processed
-     */
-    @Override
-    public void mouseEntered(MouseEvent event) {
-        if(!isEnabled || !isHighlightEnabled) {
-            return;
-        }
-
-        if (isHighlighted) {
-            return;
-        }
-
-        component = (JComponent) event.getSource();
-
-        if (highlightBorders) {
-            originalBorder = component.getBorder();
-            component.setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.WHITE));
-        }
-
-        if (highlightBackgrounds) {
-            originalColor = component.getBackground();
-            component.setBackground(getHighlightBackgroundColor());
-        }
-
-        isHighlighted = true;
-    }
-
-    /**
-     * Returns the user picked color for the highlighted background or calculates it by increasing each RGB value
-     * of the original background by 30 (within the range - for very bright colors the effect might be diminished).
-     * @return the {@code Color} of the highlighted background
-     */
-    private Color getHighlightBackgroundColor() {
-        if (highlightColor == null) {
-            highlightColor = new Color(
-                    Math.min(255, originalColor.getRed() + 30),
-                    Math.min(255, originalColor.getGreen() + 30),
-                    Math.min(255, originalColor.getBlue() + 30)
-            );
-        }
-
-        return highlightColor;
-    }
-
-    /**
-     * Returns the highlight {@code Color} of the component.
-     * @return the highlight color
-     */
-    public Color getHighlightColor() {
-        return highlightColor;
     }
 
     /**
@@ -183,28 +210,91 @@ public class HighlightingMouseAdapter extends MouseAdapter {
         }
 
         if (highlightBackgrounds) {
-            originalColor = originalColor != null ? originalColor : Color.WHITE;
-            component.setBackground(originalColor);
+            originalBackgroundColor = originalBackgroundColor != null ? originalBackgroundColor : Color.WHITE;
+            component.setBackground(originalBackgroundColor);
+        }
+
+        if (customHighlight && component instanceof CustomHighlight customComponent) {
+            customComponent.toggleHighlight(originalElementColor);
         }
 
         isHighlighted = false;
     }
 
     /**
-     * Enables or disables the adapter.
-     * @param enabled should the adapter be enabled
+     * Highlights the {@code Component} according to specified parameters, unless the adapter or highlight effect
+     * is disabled, or the component highlighted already. If the border is to be highlighted, the adapter changes it to white.
+     * If the background or a custom element is to be highlighted, the right color is determined according to
+     * {@link #updateBackgroundHighlightColor()} or {@link #updateCustomHighlightColor()}.
+     * @param event the event to be processed
      */
-    public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
+    @Override
+    public void mouseEntered(MouseEvent event) {
+        if(!isEnabled || !isHighlightEnabled) {
+            return;
+        }
+
+        if (isHighlighted) {
+            return;
+        }
+
+        component = (JComponent) event.getSource();
+
+        if (highlightBorders) {
+            originalBorder = component.getBorder();
+            component.setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.WHITE));
+        }
+
+        if (highlightBackgrounds) {
+            originalBackgroundColor = component.getBackground();
+            component.setBackground(updateBackgroundHighlightColor());
+        }
+
+        if (customHighlight && component instanceof CustomHighlight customComponent) {
+            originalElementColor = customComponent.getOriginalColor();
+            customComponent.toggleHighlight(updateCustomHighlightColor());
+        }
+
+        isHighlighted = true;
     }
 
     /**
-     * Enables or disables the highlight effect for the component, while the adapter is enabled.
-     * Disabling the adapter disables the highlight automatically.
-     * @param enabled should the highlight be enabled
+     * Returns the highlighted background color or calculates it by increasing each RGB value
+     * of the original background by 30 (within the range - for very bright colors the effect might be diminished).
+     * @return the {@code Color} of the highlighted background
      */
-    public void setHighlightEnabled(boolean enabled) {
-        isHighlightEnabled = enabled;
+    private Color updateBackgroundHighlightColor() {
+        if (backgroundHighlightColor == null) {
+            backgroundHighlightColor = getAutomaticHighlight(originalBackgroundColor);
+        }
+
+        return backgroundHighlightColor;
+    }
+
+    /**
+     * Returns the highlighted element color or calculates it by increasing each RGB value
+     * of the original element by 30 (within the range - for very bright colors the effect might be diminished).
+     * @return the {@code Color} of the highlighted element
+     */
+    private Color updateCustomHighlightColor() {
+        if (elementHighlightColor == null) {
+            elementHighlightColor = getAutomaticHighlight(originalElementColor);
+        }
+
+        return elementHighlightColor;
+    }
+
+    /**
+     * Calculates an automatic highlight color value if the color isn't otherwise specified.
+     * @param originalColor the standard non-highlighted color
+     * @return the automatic highlight color
+     */
+    private Color getAutomaticHighlight(Color originalColor) {
+        return new Color(
+                Math.min(255, originalColor.getRed() + 30),
+                Math.min(255, originalColor.getGreen() + 30),
+                Math.min(255, originalColor.getBlue() + 30)
+        );
     }
 
 }

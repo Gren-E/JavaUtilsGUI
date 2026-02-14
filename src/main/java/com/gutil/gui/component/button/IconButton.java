@@ -2,6 +2,7 @@ package com.gutil.gui.component.button;
 
 import com.gutil.gui.ImageUtil;
 import com.gutil.gui.ResizeQuality;
+import com.gutil.gui.adapters.CustomHighlight;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,13 +11,15 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 
 /**
- * A {@code HighlightedButton} implementation with an icon. Any part of the icon in blue (r:0, g:0, b:255)
- * is interpreted as the button's background and changed or highlighted accordingly.
+ * A {@code HighlightedButton} implementation with an icon. Supports color adjustments for any part of the icon
+ * originally colored in blue, so it can be changed to a specified color or highlighted.
+ * Implements {@code CustomHighlight} interface which allows the {@code HighlightingMouseAdapter} to perform specified
+ * highlight effect rather than highlighting the background like in the original {@code HighlightedButton} implementation.
  * Any potential text is displayed on top of the icon {@code Image}.
  * @author Ewelina Gren
  * @version 1.0
  */
-public class IconButton extends HighlightedButton {
+public class IconButton extends HighlightedButton implements CustomHighlight {
 
     private Image icon;
     private Image defaultIcon;
@@ -55,33 +58,27 @@ public class IconButton extends HighlightedButton {
      * Adjusts the size of the original icon to fit the target width and height.
      */
     private void resizeIcon() {
-        if (icon == null) {
-            return;
+        if (icon != null) {
+            icon = ImageUtil.resize(icon, width, height, ResizeQuality.HIGH);
         }
-
-        icon = ImageUtil.resize(icon, width, height, ResizeQuality.HIGH);
     }
 
     /**
-     * Creates the button's default non-highlighted icon by replacing all blue (r:0, g:0, b:255) with a chosen color.
+     * Creates the button's default non-highlighted icon by replacing all blue (r:0, g:0, b:255) with the default color.
      */
     private void colorDefaultIcon() {
-        if (icon == null) {
-            return;
+        if (icon != null) {
+            defaultIcon = ImageUtil.replaceColor(icon, new Color(0, 0, 255), defaultColor, 10);
         }
-
-        defaultIcon = ImageUtil.replaceColor(icon, new Color(0, 0, 255), defaultColor, 10);
     }
 
     /**
      * Creates the highlighted button icon by replacing all blue (r:0, g:0, b:255) with the highlight color.
      */
     private void colorHighlightIcon() {
-        if (icon == null) {
-            return;
+        if (icon != null) {
+            highlightIcon = ImageUtil.replaceColor(icon, new Color(0, 0, 255), highlightColor, 10);
         }
-
-        highlightIcon = ImageUtil.replaceColor(icon, new Color(0, 0, 255), highlightColor, 10);
     }
 
     /**
@@ -92,40 +89,71 @@ public class IconButton extends HighlightedButton {
         this.icon = icon;
         resizeIcon();
         colorDefaultIcon();
+        colorHighlightIcon();
     }
 
     /**
-     * Returns the default non-highlighted version of the button's icon.
-     * @return button's default icon
+     * Sets the default {@code Color} of the icon's parts that support color adjustments.
+     * @param color a target color of the icon's adjustable part
      */
-    public Image getIcon() {
-        return defaultIcon;
-    }
-
-    /**
-     * Sets the button's icon to the version that matches the parameter, 
-     * effectively changing the parts considered the button's background to the desired {@code Color}.
-     * If neither the default nor the highlighted icon match the parameter, no action is performed.
-     * @param color the desired background {@code Color}
-     */
-    @Override
-    public void setBackground(Color color) {
-        if (color == null || defaultColor == null || highlightColor == null) {
+    public void setDefaultColor(Color color) {
+        if (color == null || defaultColor.equals(color)) {
             return;
         }
 
-        if (color.equals(defaultColor)) {
-            highlight(false);
-        } else if (color.equals(highlightColor)) {
-            highlight(true);
-        } else {
-            updateHighlightColor();
-            if (color.equals(highlightColor)) {
-                colorHighlightIcon();
-                highlight(true);
-            }
+        defaultColor = color;
+        if (icon != null) {
+            colorDefaultIcon();
+            repaint();
+        }
+    }
+
+    /**
+     * Sets the highlight color in the {@code HighlightingMouseAdapter}.
+     */
+    public void setHighlightColor(Color color) {
+        getHighlightingMouseAdapter().setBackgroundHighlightColor(color);
+        updateHighlightColor();
+    }
+
+    /**
+     * Sets the button's highlight color to the one specified in the {@code HighlightMouseAdapter}.
+     */
+    private void updateHighlightColor() {
+        Color color =  getHighlightingMouseAdapter().getCustomHighlightColor();
+        if (color == null || highlightColor.equals(color)) {
+            return;
         }
 
+        highlightColor = color;
+        if (icon != null) {
+            colorHighlightIcon();
+            repaint();
+        }
+    }
+
+    /**
+     * Returns the resized version of the original icon.
+     * @return button's original icon
+     */
+    public Image getIcon() {
+        return icon;
+    }
+
+    /**
+     * Returns the default {@code Color} of the icon's adjustable part.
+     * @return the default color
+     */
+    public Color getDefaultColor() {
+        return defaultColor;
+    }
+
+    /**
+     * Returns the highlight {@code Color} as specified in the {@code HighlightingMouseAdapter}.
+     * @return the highlight color
+     */
+    public Color getHighlightColor() {
+        return getHighlightingMouseAdapter().getBackgroundHighlightColor();
     }
 
     /**
@@ -135,62 +163,6 @@ public class IconButton extends HighlightedButton {
     private void highlight(boolean highlight) {
         this.highlight = highlight;
         repaint();
-    }
-
-    /**
-     * Sets the button's highlight color to the one specified in the {@code HighlightMouseAdapter}.
-     */
-    private void updateHighlightColor() {
-        Color color =  getHighlightingMouseAdapter().getHighlightColor();
-        highlightColor = color != null ? color : Color.WHITE;
-    }
-
-    /**
-     * Returns the current {@code Color} of the button's part considered as background (whether highlighted or not).
-     * @return the button's default or highlighted background (depending on the current state)
-     */
-    @Override
-    public Color getBackground() {
-        return !highlight ? defaultColor : highlightColor;
-    }
-
-    /**
-     * Sets the highlight color in the {@code HighlightingMouseAdapter}.
-     */
-    public void setHighlightColor(Color color) {
-        getHighlightingMouseAdapter().setHighlightColor(color);
-        updateHighlightColor();
-    }
-
-    /**
-     * Returns the highlight {@code Color} as specified in the {@code HighlightingMouseAdapter}.
-     * @return the highlight color
-     */
-    public Color getHighlightColor() {
-        return getHighlightingMouseAdapter().getHighlightColor();
-    }
-
-    /**
-     * Sets the default {@code Color} of the button's part considered as background.
-     * @param color a color the background should be set to
-     */
-    public void setDefaultColor(Color color) {
-        defaultColor = color;
-
-        if (icon == null) {
-            return;
-        }
-
-        colorDefaultIcon();
-        repaint();
-    }
-
-    /**
-     * Returns the default {@code Color} of the part of the button considered as background.
-     * @return the default color
-     */
-    public Color getDefaultColor() {
-        return defaultColor;
     }
 
     /**
@@ -242,6 +214,43 @@ public class IconButton extends HighlightedButton {
         this.padx = padx;
         this.pady = pady;
         repaint();
+    }
+
+    /**
+     * Overrides the {@code HighlightedButton}'s method in order to change the highlight from background to custom.
+     */
+    @Override
+    public void setMouseListener() {
+        super.setMouseListener();
+        getHighlightingMouseAdapter().setHighlightBackgrounds(false);
+        getHighlightingMouseAdapter().setCustomHighlight(true);
+    }
+
+    /**
+     * Calls the {@link #highlight(boolean)} method based on the target element color, in order to repaint the component as default or highlighted.
+     * @param color what color should the element be set to
+     */
+    @Override
+    public void toggleHighlight(Color color) {
+        if (color == null || defaultColor == null || highlightColor == null) {
+            return;
+        }
+        updateHighlightColor();
+
+        if (color.equals(defaultColor)) {
+            highlight(false);
+        } else if (color.equals(highlightColor)) {
+            highlight(true);
+        }
+    }
+
+    /**
+     * Returns the default color of the icon's adjustable part.
+     * @return the default color
+     */
+    @Override
+    public Color getOriginalColor() {
+        return getDefaultColor();
     }
 
 }

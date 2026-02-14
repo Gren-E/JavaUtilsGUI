@@ -86,7 +86,7 @@ public abstract class HighlightedButton extends Button {
      */
     @Override
     public void setMouseListener() {
-        mouseAdapter = new HighlightingMouseAdapter(false, true);
+        mouseAdapter = new HighlightingMouseAdapter(false, true, false);
         mouseAdapter.setMouseReleasedAction(event -> handleMouseReleased());
         addMouseListener(mouseAdapter);
     }
