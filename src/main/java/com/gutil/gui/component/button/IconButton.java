@@ -220,8 +220,8 @@ public class IconButton extends HighlightedButton implements CustomHighlight {
      * Overrides the {@code HighlightedButton}'s method in order to change the highlight from background to custom.
      */
     @Override
-    public void setMouseListener() {
-        super.setMouseListener();
+    public void initMouseListener() {
+        super.initMouseListener();
         getHighlightingMouseAdapter().setHighlightBackgrounds(false);
         getHighlightingMouseAdapter().setCustomHighlight(true);
     }

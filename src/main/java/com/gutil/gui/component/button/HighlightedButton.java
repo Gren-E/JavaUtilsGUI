@@ -77,6 +77,10 @@ public abstract class HighlightedButton extends Button {
         GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, getWidth() - 10, getHeight()), getFont(), HorizontalAlignment.CENTER, 0, g2);
     }
 
+    /**
+     * Returns the {@code HighlightingMouseAdapter} associated with the button.
+     * @return the highlighting adapter
+     */
     public HighlightingMouseAdapter getHighlightingMouseAdapter() {
         return mouseAdapter;
     }
@@ -85,7 +89,7 @@ public abstract class HighlightedButton extends Button {
      * Adds a {@code HighlightingMouseAdapter} to the {@code HighlightedButton}.
      */
     @Override
-    public void setMouseListener() {
+    public void initMouseListener() {
         mouseAdapter = new HighlightingMouseAdapter(false, true, false);
         mouseAdapter.setMouseReleasedAction(event -> handleMouseReleased());
         addMouseListener(mouseAdapter);

@@ -39,11 +39,8 @@ public abstract class Button extends JPanel {
 
         this.text = text;
 
-        setMouseListener();
-
-        if (isEnabled()) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
+        initMouseListener();
+        setEnabled(true);
     }
 
     /**
@@ -74,7 +71,7 @@ public abstract class Button extends JPanel {
     /**
      * Adds a {@code MouseListener} to the {@code Button}.
      */
-    public void setMouseListener() {
+    protected void initMouseListener() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -82,6 +79,16 @@ public abstract class Button extends JPanel {
                 handleMouseReleased();
             }
         });
+    }
+
+    /**
+     * Overrides the {@code JComponent}'s method in order to change the cursor's appearance according to the parameter.
+     * @param enabled true if this component should be enabled, false otherwise
+     */
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        setCursor(enabled ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
     }
 
 }
