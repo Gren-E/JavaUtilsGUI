@@ -51,8 +51,7 @@ public class ProgressChart extends ProgressIndicator {
     public Dimension getPreferredSize() {
         Graphics g = getGraphics();
         FontMetrics metrics = g.getFontMetrics();
-        String value = currentValue + "/" + maxValue;
-        int textDiameter = Math.max(metrics.getHeight(), metrics.stringWidth(value));
+        int textDiameter = Math.max(metrics.getHeight(), metrics.stringWidth(getValueText()));
         int preferredDiameter = diameter != 0 ? diameter : (textDiameter + 20) * 3/2 ;
         return new Dimension(preferredDiameter, preferredDiameter);
     }

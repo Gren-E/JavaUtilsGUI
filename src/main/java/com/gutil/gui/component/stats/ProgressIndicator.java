@@ -127,12 +127,20 @@ public abstract class ProgressIndicator extends JPanel implements CustomHighligh
     public abstract Dimension getMinimumSize();
 
     /**
+     * Returns the {@code String} representation of the current value displayed on the chart.
+     * @return the current value as a {@code String}
+     */
+    public String getValueText() {
+        return currentValue + "/" + maxValue;
+    }
+
+    /**
      * Draws the {@code String} representation of the current value within the specified {@code Rectangle}.
      * @param rectangle the {@code Rectangle} in which the text should be drawn
      * @param g2 the {@code Graphics2D} object to protect
      */
     public void drawText(Rectangle rectangle, Graphics2D g2) {
-        String value = currentValue + "/" + maxValue;
+        String value = getValueText();
 
         g2.setColor(getForeground());
         g2.setFont(getFont());
@@ -142,4 +150,5 @@ public abstract class ProgressIndicator extends JPanel implements CustomHighligh
             GraphicsUtil.drawString(value, rectangle, getFont(), HorizontalAlignment.CENTER, 0, g2);
         }
     }
+
 }

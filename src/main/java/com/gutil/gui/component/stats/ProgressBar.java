@@ -51,9 +51,8 @@ public class ProgressBar extends ProgressIndicator {
     public Dimension getPreferredSize() {
         Graphics g = getGraphics();
         FontMetrics metrics = g.getFontMetrics();
-        String value = currentValue + "/" + maxValue;
         int preferredHeight = barHeight != 0 ? barHeight : metrics.getHeight() + 10;
-        int preferredWidth = barWidth != 0 ? barWidth : metrics.stringWidth(value) + 10;
+        int preferredWidth = barWidth != 0 ? barWidth : metrics.stringWidth(getValueText()) + 10;
         return new Dimension(preferredWidth, preferredHeight);
     }
 
