@@ -104,9 +104,9 @@ public class RoundButton extends HighlightedButton {
 
         g2.setColor(main);
         if (keepSymmetry) {
-            g2.fillOval((width - diameter) / 2 + 5, (height - diameter) / 2, diameter - 10, diameter - 8);
+            g2.fillOval((width - diameter) / 2 + 4, (height - diameter) / 2, diameter - 8, diameter - 8);
         } else {
-            g2.fillRoundRect(5, 0, width - 10, height - 8, diameter - 10, diameter - 8);
+            g2.fillRoundRect(6, 0, width - 12, height - 8, diameter - 8, diameter - 8);
         }
     }
 
@@ -119,7 +119,7 @@ public class RoundButton extends HighlightedButton {
     public void drawText(Graphics2D g2) {
         g2.setColor(getForeground());
         String adjustedText = GraphicsUtil.cropString(text, getFont(), (keepSymmetry ? diameter : width) - 10, g2);
-        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, width - 10, height), getFont(), HorizontalAlignment.CENTER, 0, g2);
+        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, width - 10, height - 4), getFont(), HorizontalAlignment.CENTER, 0, g2);
     }
 
 }
