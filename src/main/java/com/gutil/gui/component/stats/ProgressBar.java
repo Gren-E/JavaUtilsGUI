@@ -1,9 +1,9 @@
 package com.gutil.gui.component.stats;
 
-import com.gutil.gui.GraphicsUtil;
-import com.gutil.gui.HorizontalAlignment;
+import com.gutil.gui.ColorUtil;
 
-import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -16,8 +16,8 @@ import java.awt.RenderingHints;
  */
 public class ProgressBar extends ProgressIndicator {
 
-    private int width;
-    private int height;
+    private int barWidth;
+    private int barHeight;
 
     /**
      * Creates a {@code ProgressBar} with current value and maximum value set to 0.
@@ -44,19 +44,42 @@ public class ProgressBar extends ProgressIndicator {
     }
 
     /**
-     * Sets target width of the bar, otherwise the bar expands to the component width.
-     * @param width target width of the bar
+     * Returns the preferred size of the progress bar.
+     * @return preferred {@code Dimension} of the bar
      */
-    public void setWidth(int width) {
-        this.width = width;
+    @Override
+    public Dimension getPreferredSize() {
+        Graphics g = getGraphics();
+        FontMetrics metrics = g.getFontMetrics();
+        String value = currentValue + "/" + maxValue;
+        int preferredHeight = barHeight != 0 ? barHeight : metrics.getHeight() + 10;
+        int preferredWidth = barWidth != 0 ? barWidth : metrics.stringWidth(value) + 10;
+        return new Dimension(preferredWidth, preferredHeight);
+    }
+
+    /**
+     * Returns the minimum size of the progress bar.
+     * @return minimum {@code Dimension} of the bar
+     */
+    @Override
+    public Dimension getMinimumSize() {
+        return getPreferredSize();
+    }
+
+    /**
+     * Sets target width of the bar, otherwise the bar expands to the component width.
+     * @param barWidth target width of the bar
+     */
+    public void setBarWidth(int barWidth) {
+        this.barWidth = barWidth;
     }
 
     /**
      * Sets target height of the bar, otherwise the bar expands to the component height.
-     * @param height target height of the bar
+     * @param barHeight target height of the bar
      */
-    public void setHeight(int height) {
-        this.height = height;
+    public void setBarHeight(int barHeight) {
+        this.barHeight = barHeight;
     }
 
     /**
@@ -67,10 +90,12 @@ public class ProgressBar extends ProgressIndicator {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        int componentWidth = Math.max(getWidth(), getMinimumSize().width);
-        int componentHeight = Math.max(getHeight(), getMinimumSize().height);
-        int barWidth = width != 0 ? Math.min(width, componentWidth) : componentWidth;
-        int barHeight = height != 0 ? Math.min(height, componentHeight) : componentHeight;
+        int width = Math.max(getWidth(), getMinimumSize().width);
+        int height = Math.max(getHeight(), getMinimumSize().height);
+
+        barWidth = barWidth != 0 ? Math.min(barWidth, width) : width;
+        barHeight = barHeight != 0 ? Math.min(barHeight, height) : height;
+
         if (barWidth <= 0 || barHeight <= 10) {
             return;
         }
@@ -78,25 +103,18 @@ public class ProgressBar extends ProgressIndicator {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int progressWidth = (maxValue != 0) ? (int)(getProgressRatio() * barWidth) : 0;
-        int x = (getWidth() - barWidth) / 2;
-        int y = (getHeight() - barHeight) / 2;
+        int progressWidth = maxValue != 0 ? (int)(getProgressRatio() * barWidth) : 0;
 
-        g2.setColor(new Color(progressColor.getRed(), progressColor.getGreen(), progressColor.getBlue(), 50));
+        int x = (width - barWidth) / 2;
+        int y = (height - barHeight) / 2;
+
+        g2.setColor(ColorUtil.semiTransparent(progressColor, 50));
         g2.fillRect(x, y, barWidth, barHeight);
 
         g2.setColor(progressColor);
         g2.fillRect(x, y, progressWidth, barHeight);
 
-        String value = currentValue + "/" + maxValue;
-
-        g2.setColor(getForeground());
-        g2.setFont(getFont());
-        int stringWidth = g2.getFontMetrics().stringWidth(value);
-        int stringHeight = g2.getFontMetrics().getHeight();
-        if (stringWidth < barWidth && stringHeight < barHeight) {
-            GraphicsUtil.drawString(value, new Rectangle(x, y, barWidth, barHeight), getFont(), HorizontalAlignment.CENTER, 0, g2);
-        }
+        drawText(new Rectangle(x, y, barWidth, barHeight), g2);
     }
 
 }

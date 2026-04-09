@@ -1,9 +1,14 @@
 package com.gutil.gui.component.stats;
 
+import com.gutil.gui.GraphicsUtil;
+import com.gutil.gui.HorizontalAlignment;
 import com.gutil.gui.adapters.CustomHighlight;
 
 import javax.swing.JPanel;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * Abstract class defining basic framework for all {@code ProgressIndicator} subclasses, meant to display progress.
@@ -107,4 +112,34 @@ public abstract class ProgressIndicator extends JPanel implements CustomHighligh
         return progressColor;
     }
 
+    /**
+     * Returns the preferred size of the progress indicator.
+     * @return preferred {@code Dimension} of the component
+     */
+    @Override
+    public abstract Dimension getPreferredSize();
+
+    /**
+     * Returns the minimum size of the progress indicator.
+     * @return minimum {@code Dimension} of the component
+     */
+    @Override
+    public abstract Dimension getMinimumSize();
+
+    /**
+     * Draws the {@code String} representation of the current value within the specified {@code Rectangle}.
+     * @param rectangle the {@code Rectangle} in which the text should be drawn
+     * @param g2 the {@code Graphics2D} object to protect
+     */
+    public void drawText(Rectangle rectangle, Graphics2D g2) {
+        String value = currentValue + "/" + maxValue;
+
+        g2.setColor(getForeground());
+        g2.setFont(getFont());
+        int stringWidth = g2.getFontMetrics().stringWidth(value);
+        int stringHeight = g2.getFontMetrics().getHeight();
+        if (stringWidth < rectangle.width && stringHeight < rectangle.height) {
+            GraphicsUtil.drawString(value, rectangle, getFont(), HorizontalAlignment.CENTER, 0, g2);
+        }
+    }
 }

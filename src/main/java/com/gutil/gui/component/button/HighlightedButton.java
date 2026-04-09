@@ -74,7 +74,7 @@ public abstract class HighlightedButton extends Button {
     public void drawText(Graphics2D g2) {
         g2.setColor(getForeground());
         String adjustedText = GraphicsUtil.cropString(text, getFont(), getWidth() - 10, g2);
-        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, getWidth() - 10, getHeight()), getFont(), HorizontalAlignment.CENTER, 0, g2);
+        GraphicsUtil.drawString(adjustedText, new Rectangle(5, 0, getWidth() - 10, getHeight() - 4), getFont(), HorizontalAlignment.CENTER, 0, g2);
     }
 
     /**

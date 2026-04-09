@@ -2,6 +2,9 @@ package com.gutil.gui.component.button;
 
 import javax.swing.JPanel;
 import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -79,6 +82,31 @@ public abstract class Button extends JPanel {
                 handleMouseReleased();
             }
         });
+    }
+
+    /**
+     * Returns the exact button size to fit the whole text.
+     * @return preferred {@code Dimension} of the button
+     */
+    @Override
+    public Dimension getPreferredSize() {
+        Graphics g = getGraphics();
+        FontMetrics metrics = g.getFontMetrics();
+        int height = metrics.getHeight() * 2;
+        int width = metrics.stringWidth(text) + height;
+        return new Dimension(width, height);
+    }
+
+    /**
+     * Returns the minimum button size. Text might be cropped.
+     * @return minimum {@code Dimension} of the button
+     */
+    @Override
+    public Dimension getMinimumSize() {
+        Graphics g = getGraphics();
+        FontMetrics metrics = g.getFontMetrics();
+        int size = metrics.getHeight() * 2;
+        return new Dimension(size, size);
     }
 
     /**
